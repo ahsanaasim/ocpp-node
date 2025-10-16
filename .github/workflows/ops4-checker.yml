@@ -80,7 +80,7 @@ jobs:
           console.log('Normalized issues:', payload.issues.length);
           NODE
 
-      - name: POST results to Ops4Team
+      - name: POST results to Ops4
         if: always()
         env:
           OPS4_URL: ${{ secrets.OPS4_URL }}

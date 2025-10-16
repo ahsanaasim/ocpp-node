@@ -13,6 +13,7 @@ app.get('/', (req: Request, res: Response) => {
 });
 
 system.start(app);
+// just a comment
 
 const chargerPoint = new ChargerPoint();
 // chargerPoint.init('cp1', 'ws://localhost:3000');

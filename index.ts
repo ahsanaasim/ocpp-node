@@ -16,7 +16,6 @@ system.start(app);
 
 const chargerPoint = new ChargerPoint();
 // chargerPoint.init('cp1', 'ws://localhost:3000');
-// commented 
 
 const chargerPoint2 = new ChargerPoint();
 // chargerPoint2.init('cp2', 'ws://localhost:3000');

@@ -76,67 +76,6 @@ jobs:
             }
           }
 
-          # const audit = readJSON('ops4-npm-audit.json');
-          # const mapSeverity = (s) => {
-          #   const t = String(s || '').toLowerCase();
-          #   if (t === 'critical') return 'Critical';
-          #   if (t === 'high') return 'High';
-          #   if (t === 'moderate') return 'Medium';
-          #   if (t === 'low') return 'Low';
-          #   return 'Medium';
-          # };
-
-          # if (audit) {
-          #   const findings = [];
-          #   if (Array.isArray(audit.vulnerabilities)) {
-          #     findings.push(...audit.vulnerabilities);
-          #   }
-          #   if (audit.advisories) {
-          #     findings.push(...Object.values(audit.advisories));
-          #   }
-          #   if (audit.vulnerabilities && typeof audit.vulnerabilities === 'object' && !Array.isArray(audit.vulnerabilities)) {
-          #     for (const [pkg, info] of Object.entries(audit.vulnerabilities)) {
-          #       if (Array.isArray(info.via)) {
-          #         for (const via of info.via) {
-          #           if (typeof via === 'object') findings.push({ package: pkg, ...via });
-          #         }
-          #       }
-          #     }
-          #   }
-
-          #   for (const v of findings) {
-          #     const name = v.module_name || v.module || v.package || v.name || 'unknown';
-          #     const cve = v.cves?.[0] || v.cve || v.github_advisory_id || v.id || 'advisory';
-          #     const severity = mapSeverity(v.severity || v.severity_overall || v.severitySource);
-          #     const via = Array.isArray(v.via) ? v.via.map(x => typeof x === 'string' ? x : (x.title || x.source || '')).filter(Boolean).join(' | ') : '';
-          #     const path = v.path || (Array.isArray(v.effects) ? v.effects.join(' > ') : '') || (Array.isArray(v.dependsOn) ? v.dependsOn.join(' > ') : '') || name;
-          #     const installed = v.range || v.findings?.[0]?.version || v.installed_version || v.version || '';
-          #     const fix = v.fixAvailable?.name ? `${v.fixAvailable.name}@${v.fixAvailable.version}` :
-          #                 v.fixAvailable?.version ? v.fixAvailable.version :
-          #                 v.patched_versions || v.fix_versions || v.firstPatchedVersion?.identifier || '';
-
-          #     const description = [
-          #       v.title || v.overview || v.summary || 'npm advisory',
-          #       cve && cve !== 'advisory' ? `Advisory: ${cve}` : '',
-          #       v.url ? `More: ${v.url}` : ''
-          #     ].filter(Boolean).join(' — ');
-
-          #     payload.issues.push({
-          #       tool: 'npm-audit',
-          #       path: path || name,
-          #       line: 1,
-          #       col: 1,
-          #       title: `npm: ${name}`,
-          #       description,
-          #       severity,
-          #       ruleId: cve || 'npm-advisory',
-          #       fingerprint: fp(`${name}:${cve}:${installed}:${path}`),
-          #       tags: ['security','dependencies','nodejs'],
-          #       meta: { installed, fixedIn: fix }
-          #     });
-          #   }
-          # }
-
           fs.writeFileSync('ops4-payload.json', JSON.stringify(payload, null, 2));
           console.log('Normalized issues:', payload.issues.length);
           NODE

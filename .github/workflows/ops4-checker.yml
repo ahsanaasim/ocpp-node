@@ -3,7 +3,7 @@ name: Ops4Team Scan (Node.js)
 on:
   pull_request:
   push:
-    branches: [ main ]
+    branches: [ master ]
 
 permissions:
   contents: read

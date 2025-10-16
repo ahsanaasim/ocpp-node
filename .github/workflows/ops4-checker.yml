@@ -79,6 +79,75 @@ jobs:
           fs.writeFileSync('ops4-payload.json', JSON.stringify(payload, null, 2));
           console.log('Normalized issues:', payload.issues.length);
           NODE
+      
+      - name: Test (with coverage)
+        if: hashFiles('**/package.json') != ''
+        run: |
+          npx jest --coverage --coverageReporters='json-summary' --coverageReporters='lcov' || true
+
+      - name: Aggregate coverage
+        shell: bash
+        run: |
+          node <<'NODE'
+          const fs = require('fs');
+          const path = require('path');
+      
+          function findFiles(dir, name, acc=[]) {
+            for (const f of fs.readdirSync(dir, {withFileTypes:true})) {
+              const p = path.join(dir, f.name);
+              if (f.isDirectory()) { if (f.name !== 'node_modules') findFiles(p, name, acc); }
+              else if (f.isFile() && f.name === name) acc.push(p);
+            }
+            return acc;
+          }
+      
+          const files = findFiles(process.cwd(), 'coverage-summary.json', []);
+          let totals = { lines:{covered:0,total:0}, statements:{covered:0,total:0}, branches:{covered:0,total:0}, functions:{covered:0,total:0} };
+      
+          for (const file of files) {
+            const sum = JSON.parse(fs.readFileSync(file,'utf8')).total;
+            for (const k of ['lines','statements','branches','functions']) {
+              if (sum[k]) {
+                totals[k].covered += sum[k].covered || 0;
+                totals[k].total   += sum[k].total   || 0;
+              }
+            }
+          }
+      
+          function pct({covered,total}) { return total ? +( (covered/total)*100 ).toFixed(1) : 0; }
+      
+          const coverage = {
+            filesAnalyzed: files.length,
+            lines: pct(totals.lines),
+            statements: pct(totals.statements),
+            branches: pct(totals.branches),
+            functions: pct(totals.functions),
+            overall: pct({
+              covered: totals.lines.covered + totals.statements.covered + totals.branches.covered + totals.functions.covered,
+              total:   totals.lines.total   + totals.statements.total   + totals.branches.total   + totals.functions.total
+            })
+          };
+      
+          fs.writeFileSync('ops4-coverage.json', JSON.stringify(coverage,null,2));
+          console.log('COVERAGE', coverage);
+      
+          // Expose for later steps
+          fs.appendFileSync(process.env.GITHUB_OUTPUT, `COVERAGE=${coverage.overall}\n`);
+          NODE
+        id: cov
+
+      - name: Attach coverage to payload
+        shell: bash
+        run: |
+          node <<'NODE'
+          const fs = require('fs');
+          const payload = JSON.parse(fs.readFileSync('ops4-payload.json','utf8'));
+          try {
+            const cov = JSON.parse(fs.readFileSync('ops4-coverage.json','utf8'));
+            payload.coverage = cov;
+          } catch {}
+          fs.writeFileSync('ops4-payload.json', JSON.stringify(payload,null,2));
+          NODE
 
       - name: POST results to Ops4
         if: always()

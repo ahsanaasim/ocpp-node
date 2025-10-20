@@ -27,6 +27,12 @@ jobs:
         if: hashFiles('**/.eslintrc*') != ''
         run: npx eslint . --ext .js,.jsx,.ts,.tsx -f json -o ops4-eslint.json || true
 
+      - name: Resolve ESLint config
+        shell: bash
+        run: |
+          PROBE=$(git ls-files '*.ts' '*.tsx' '*.js' '*.jsx' | head -n 1 || echo 'package.json')
+          npx eslint --print-config "$PROBE" > ops4-eslint-config.json
+
       # - name: Run npm audit (JSON)
       #   if: hashFiles('**/package.json') != ''
       #   run: npm audit --json > ops4-npm-audit.json || true
@@ -151,6 +157,55 @@ jobs:
           try {
             const cov = JSON.parse(fs.readFileSync('ops4-coverage.json','utf8'));
             payload.coverage = cov;
+          } catch {}
+          fs.writeFileSync('ops4-payload.json', JSON.stringify(payload,null,2));
+          NODE
+
+      - name: Normalize → ops4-lint-rules.json
+        shell: bash
+        run: |
+          node <<'NODE'
+          const fs = require('fs');
+
+          const cfg = JSON.parse(fs.readFileSync('ops4-eslint-config.json','utf8'));
+          const rules = cfg.rules || {};
+
+          const toLevel = (x) => {
+            if (Array.isArray(x)) x = x[0];
+            if (x === 2 || x === 'error') return 'error';
+            if (x === 1 || x === 'warn') return 'warn';
+            return 'off';
+          };
+          const toOptions = (x) => Array.isArray(x) ? x[1] : undefined;
+
+          const list = Object.entries(rules).map(([id, setting]) => ({
+            id,
+            level: toLevel(setting),
+            options: toOptions(setting),
+          }));
+
+          const payload = {
+            repo: process.env.GITHUB_REPOSITORY,
+            sha: process.env.GITHUB_SHA,
+            ref: process.env.GITHUB_REF,
+            runId: process.env.GITHUB_RUN_ID,
+            detectedAt: new Date().toISOString(),
+            rules: list
+          };
+
+          fs.writeFileSync('ops4-lint-rules.json', JSON.stringify(payload,null,2));
+          console.log(`Normalized ${list.length} rules`);
+          NODE
+
+      - name: Attach rules to payload
+        shell: bash
+        run: |
+          node <<'NODE'
+          const fs = require('fs');
+          const payload = JSON.parse(fs.readFileSync('ops4-payload.json','utf8'));
+          try {
+            const rules = JSON.parse(fs.readFileSync('ops4-lint-rules.json','utf8'));
+            payload.rules = rules;
           } catch {}
           fs.writeFileSync('ops4-payload.json', JSON.stringify(payload,null,2));
           NODE

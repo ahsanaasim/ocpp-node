@@ -38,11 +38,17 @@ jobs:
           const fs = require('fs');
           const crypto = require('crypto');
 
+          const branch =
+            process.env.GITHUB_HEAD_REF ||
+            process.env.GITHUB_REF_NAME ||
+            (process.env.GITHUB_REF || '').replace(/^refs\/heads\//, '');
+
           const payload = {
             repo: process.env.GITHUB_REPOSITORY,
             sha: process.env.GITHUB_SHA,
             runId: process.env.GITHUB_RUN_ID,
             ref: process.env.GITHUB_REF,
+            branch: branch,
             detectedAt: new Date().toISOString(),
             issues: []
           };

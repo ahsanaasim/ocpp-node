@@ -263,7 +263,6 @@ jobs:
                 const title = adv.title || `npm advisory for ${pkg}`;
                 const desc = [
                   title,
-                  adv.url ? `Advisory: ${adv.url}` : '',
                   range ? `Range: ${range}` : '',
                   isDirect ? 'Direct dependency' : 'Transitive dependency',
                 ].filter(Boolean).join(' — ');
